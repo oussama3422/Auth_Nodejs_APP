@@ -10,6 +10,7 @@ const passportLocalMongoose = require('passport-local-mongoose');
 const passport = require('passport');
 var GoogleStrategy=require("passport-google-oauth20").Strategy;
 const findOrCreate = require('mongoose-findorcreate');
+const FacebookStrategy = require('passport-facebook').Strategy;
 // const saltRounds = 10;
 
 // const md5 = require("md5");
@@ -63,14 +64,28 @@ passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
 
-passport.use(new GoogleStrategy({
+passport.use(
+  new GoogleStrategy({
   clientID: process.env.CLIENT_ID,
   clientSecret: process.env.CLIENT_SECRET,
   callbackURL: "http://localhost:3000/auth/google/secrets",
   userProfileURL:"https://www.googleapis.com/oauth2/v3/userinfo",
 },
+function(accessToken, refreshToken, profile, done) {
+  console.log(profile);
+  return done(null,profile);
+
+}
+));
+passport.use(
+  new FacebookStrategy({
+  clientID: process.env.CLIENT_ID,
+  clientSecret: process.env.CLIENT_SECRET,
+  callbackURL: "http://localhost:3000/auth/facebook/secrets",
+  // userProfileURL:"https://www.googleapis.com/oauth2/v3/userinfo",
+},
 function(accessToken, refreshToken, profile, cb) {
-  User.findOrCreate({ googleId: profile.id }, function (err, user) {
+  User.findOrCreate({ facebookId: profile.id }, function (err, user) {
     return cb(err, user);
   });
 }
@@ -86,6 +101,10 @@ app.get("/", function(req, res){
 app.get("/auth/google",(req,res)=>{
 
   passport.authenticate("google",{scope:["profile"]})
+});
+app.get("/auth/facebook",(req,res)=>{
+
+  passport.authenticate("facebook",{scope:["profile"]})
 });
 
 
